@@ -1,40 +1,38 @@
-import {
-  createConnection,
-  TextDocuments,
-  ProposedFeatures,
-  InitializeParams,
-  TextDocumentSyncKind,
-  InitializeResult,
-} from "vscode-languageserver/node";
+import log from "./log";
+import { initialize } from "./methods/initialize";
 
-import { TextDocument } from "vscode-languageserver-textdocument";
+interface Message {
+    jsonrpc: string;
+}
 
-// Create a connection for the server, using Node's IPC as a transport.
-// Also include all preview / proposed LSP features.
-const connection = createConnection(ProposedFeatures.all);
+export interface RequestMessage extends Message {
+    id: number | string;
+    method: string;
+    params?: unknown[] | object;
+}
 
-// Create a simple text document manager.
-const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
+let buffer = "";
 
-connection.onInitialize((params: InitializeParams) => {
-  const result: InitializeResult = {
-    capabilities: {
-      textDocumentSync: TextDocumentSyncKind.Incremental,
-    },
-  };
+process.stdin.on("data", (data) => {
+    buffer += data;
 
-  return result;
+    while (true) {
+        const lengthMatch = buffer.match(/Content-Length: (\d+)\r\n/);
+        if (!lengthMatch) {
+            break;
+        }
+
+        const contentLength = parseInt(lengthMatch[1], 10);
+        const messageStart = buffer.indexOf("\r\n\r\n") + 4;
+        if (buffer.length < messageStart + contentLength) {
+            break;
+        }
+
+        const rawMessage = buffer.slice(messageStart, messageStart + contentLength);
+        const message = JSON.parse(rawMessage);
+
+        log.write({ id: message.id, method: message.method });
+
+        buffer = buffer.slice(messageStart + contentLength);
+    }
 });
-
-documents.onDidChangeContent((change) => {
-  connection.window.showInformationMessage(
-    "onDidChangeContent: " + change.document.uri
-  );
-});
-
-// Make the text document manager listen on the connection
-// for open, change and close text document events
-documents.listen(connection);
-
-// Listen on the connection
-connection.listen();
