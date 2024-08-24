@@ -1,20 +1,45 @@
 import log from "./log";
 import { initialize } from "./methods/initialize";
+import { completion } from "./methods/textDocument/completion";
+import { didChange } from "./methods/textDocument/didChange";
 
 interface Message {
     jsonrpc: string;
 }
 
-export interface RequestMessage extends Message {
-    id: number | string;
+export interface NotificationMessage extends Message {
     method: string;
     params?: unknown[] | object;
 }
 
+export interface RequestMessage extends NotificationMessage {
+    id: number | string;
+}
+
 let buffer = "";
 
-process.stdin.on("data", (data) => {
-    buffer += data;
+type RequestMethod = (
+    message: RequestMessage
+) => ReturnType<typeof initialize> | ReturnType<typeof completion>;
+
+type NotificationMethod = (message: NotificationMessage) => void;
+
+const methodLookup: Record<string, RequestMethod | NotificationMethod> = {
+    initialize,
+    "textDocument/completion": completion,
+    "textDocument/didChange": didChange,
+};
+
+const respond = (id: RequestMessage["id"], result: object | null) => {
+    const message = JSON.stringify({ id, result });
+    const messageLength = Buffer.byteLength(message, "utf-8");
+    const header = `Content-Length: ${messageLength}\r\n\r\n`;
+    // log.write(header + message);
+    process.stdout.write(header + message);
+};
+
+process.stdin.on("data", (chunk) => {
+    buffer += chunk;
 
     while (true) {
         const lengthMatch = buffer.match(/Content-Length: (\d+)\r\n/);
@@ -31,7 +56,15 @@ process.stdin.on("data", (data) => {
         const rawMessage = buffer.slice(messageStart, messageStart + contentLength);
         const message = JSON.parse(rawMessage);
 
-        log.write({ id: message.id, method: message.method });
+        log.write({ id: message.id, method: message.method, params: message.params });
+
+        const method = methodLookup[message.method];
+        if (method) {
+            const result = method(message);
+            if (result !== undefined) {
+                respond(message.id, result);
+            }
+        }
 
         buffer = buffer.slice(messageStart + contentLength);
     }

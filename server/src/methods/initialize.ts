@@ -7,17 +7,16 @@ interface InitializeResult {
 
     serverInfo?: {
         name: string;
-
         version?: string;
     };
 }
 
 export const initialize = (message: RequestMessage): InitializeResult => {
     return {
-        capabilities: {},
+        capabilities: { completionProvider: {}, textDocumentSync: 1 },
         serverInfo: {
             name: "vscodelsp",
-            version: "0.0.1"
-        }
-    }
+            version: "0.0.1",
+        },
+    };
 };
