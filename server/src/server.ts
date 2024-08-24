@@ -1,6 +1,7 @@
 import log from "./log";
 import { initialize } from "./methods/initialize";
 import { completion } from "./methods/textDocument/completion";
+import { diagnostic } from "./methods/textDocument/diagnostic";
 import { didChange } from "./methods/textDocument/didChange";
 
 interface Message {
@@ -20,7 +21,11 @@ let buffer = "";
 
 type RequestMethod = (
     message: RequestMessage
-) => ReturnType<typeof initialize> | ReturnType<typeof completion>;
+) =>
+    | ReturnType<typeof initialize>
+    | ReturnType<typeof completion>
+    | ReturnType<typeof diagnostic>
+    | void;
 
 type NotificationMethod = (message: NotificationMessage) => void;
 
@@ -28,6 +33,7 @@ const methodLookup: Record<string, RequestMethod | NotificationMethod> = {
     initialize,
     "textDocument/completion": completion,
     "textDocument/didChange": didChange,
+    "textDocument/diagnostic": diagnostic,
 };
 
 const respond = (id: RequestMessage["id"], result: object | null) => {
@@ -56,7 +62,8 @@ process.stdin.on("data", (chunk) => {
         const rawMessage = buffer.slice(messageStart, messageStart + contentLength);
         const message = JSON.parse(rawMessage);
 
-        log.write({ id: message.id, method: message.method, params: message.params });
+        // log.write({ id: message.id, method: message.method, params: message.params });
+        log.write({ id: message.id, method: message.method });
 
         const method = methodLookup[message.method];
         if (method) {
