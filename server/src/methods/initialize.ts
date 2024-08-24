@@ -16,6 +16,7 @@ export const initialize = (message: RequestMessage): InitializeResult => {
         capabilities: {
             completionProvider: {},
             textDocumentSync: 1,
+            codeActionProvider: true,
             diagnosticProvider: {
                 interFileDependencies: false,
                 workspaceDiagnostics: false,
