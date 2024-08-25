@@ -1,5 +1,5 @@
 import log from "./log";
-import { initialize } from "./methods/initialize";
+import { exit, initialize, shutdown } from "./methods/initialize";
 import { codeAction } from "./methods/textDocument/codeActions";
 import { completion } from "./methods/textDocument/completion";
 import { diagnostic } from "./methods/textDocument/diagnostic";
@@ -33,7 +33,9 @@ type RequestMethod = (
 type NotificationMethod = (message: NotificationMessage) => void;
 
 const methodLookup: Record<string, RequestMethod | NotificationMethod> = {
+    exit,
     initialize,
+    shutdown,
     "textDocument/completion": completion,
     "textDocument/didChange": didChange,
     "textDocument/diagnostic": diagnostic,

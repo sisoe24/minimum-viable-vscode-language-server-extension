@@ -28,3 +28,12 @@ export const initialize = (message: RequestMessage): InitializeResult => {
         },
     };
 };
+
+
+export const shutdown = () => {
+    return null;
+}
+
+export const exit = () => {
+    process.exit(0);
+} 
