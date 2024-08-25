@@ -16,7 +16,7 @@ export const spellingSuggestions = (content: string): Record<string, string[]> =
             case "&":
                 const suggestionsMatch = line.match(/^& (.*?) \d.*: (.*)$/);
                 if (!suggestionsMatch) {
-                    log.write({ error: "Invalid aspell output", line });
+                    // log.write({ error: "Invalid aspell output", line });
                     return;
                 }
                 invalidWordsAndSuggetions[suggestionsMatch[1]] = suggestionsMatch[2].split(", ");
@@ -24,7 +24,7 @@ export const spellingSuggestions = (content: string): Record<string, string[]> =
             case "*":
                 const match = line.match(/^# (.*?) \d/);
                 if (!match) {
-                    log.write({ error: "Invalid aspell output", line });
+                    // log.write({ error: "Invalid aspell output", line });
                     return;
                 }
                 invalidWordsAndSuggetions[match[1]] = [];

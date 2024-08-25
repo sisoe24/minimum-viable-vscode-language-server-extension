@@ -1,4 +1,7 @@
-export  type DocumentUri = string;
+import log from "./log";
+import { Position, Range } from "./types";
+
+export type DocumentUri = string;
 type DocumentBody = string;
 
 export interface TextDocumentIdentifier {
@@ -8,12 +11,52 @@ export interface TextDocumentIdentifier {
 export interface VersionedTextDocumentIdentifier extends TextDocumentIdentifier {
     version: number;
 }
-/**
- * An event describing a change to a text document. If only a text is provided
- * it is considered to be the full content of the document.
- */
+
 export type TextDocumentContentChangeEvent = {
     text: string;
 };
 
 export const documents = new Map<DocumentUri, DocumentBody>();
+
+type WordUnderCursor = {
+    text: string;
+    range: Range;
+};
+
+export const wordUnderCursor = (uri: DocumentUri, position: Position): WordUnderCursor | null => {
+    log.write({ wordUnderCursor: documents });
+
+    const document = documents.get(uri);
+    log.write({ documents: { document } });
+
+    if (!document) {
+        log.write({ wordUnderCursor: "no document" });
+        return null;
+    }
+
+    const lines = document.split("\n");
+    const line = lines[position.line];
+
+    const start = line.lastIndexOf(" ", position.character) + 1;
+    const end = line.indexOf(" ", position.character);
+
+    log.write({ wordUnderCursor: { start, end } });
+
+    if (end === -1) {
+        return {
+            text: line.slice(start),
+            range: {
+                start: { line: position.line, character: start },
+                end: { line: position.line, character: line.length },
+            },
+        };
+    }
+
+    return {
+        text: line.slice(start, end),
+        range: {
+            start: { line: position.line, character: start },
+            end: { line: position.line, character: end },
+        },
+    };
+};

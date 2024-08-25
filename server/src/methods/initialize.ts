@@ -17,6 +17,7 @@ export const initialize = (message: RequestMessage): InitializeResult => {
             completionProvider: {},
             textDocumentSync: 1,
             codeActionProvider: true,
+            hoverProvider: true,
             diagnosticProvider: {
                 interFileDependencies: false,
                 workspaceDiagnostics: false,
